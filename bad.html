@@ -28,7 +28,7 @@ var y = d3.scaleLinear()
 
 var colors = d3.scaleOrdinal().range(["#FD6A17", "#6C5142"]);
 
-d3.csv("data/asics.csv", function(d, i, columns) {
+d3.csv("asics.csv", function(d, i, columns) {
   for (i = 1, t = 0; i < columns.length; ++i){  //scroll through data
     d[columns[i]] = +d[columns[i]];             //convert string data to numbers
     t += d[columns[i]];                         //sum columns
@@ -103,18 +103,4 @@ d3.csv("data/asics.csv", function(d, i, columns) {
         }
     });
 });
-/* Answer assignment questions here:
-
-1)
-a) part: Each part of the body is represented textually on the x-axis and with a
-  bar extending upwards from it.
-b) percentage: Percentage is represented by height of the orange part of the
-  bar.
-c) recovery: Recovery is represented by the height of the brown part of the bar.
-
-2)While this visualization allows you to estimate/compare both the
-  percentage/recovery values, you can only do so through great effort. It's a
-  bad visualization because to understand the recovery values, one must subtract
-   the starting height of the brown part of the bar from the total height.
-*/
 </script>
