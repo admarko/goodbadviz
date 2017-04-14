@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+#thevis {
+ outline: black solid 2px;
+ background-color: #838B8B;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+arc text {
+  font: 14px sans-serif;
+}
+
+/*Lines between slices and around circle */
+.arc path {
+  stroke: black;
+}
+
+.legend {
+   font-size: 12px;
+ }
+ rect {
+   stroke-width: 2;
+ }
+</style>
+
+<svg id="thevis" width="800" height="500"></svg> <!-- do not change this line -->
+<script src="lib/d3.v4.js"></script> <!-- change to d3.v3.js if you want -->
+<script src="student.js"></script> <!-- do not change this line -->
+
+<script>
+//Pie Chart based off of: https://bl.ocks.org/mbostock/3887235
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    radius = Math.min(width, height) / 2,
+    g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+var pie = d3.pie()
+    .sort(function(d){d.recovery;})
+    .value(function(d) { return d.percentage; });
+
+var path = d3.arc()
+    .outerRadius(radius - 10) //outerRadius  radius of pie
+    .innerRadius(10);          //increase innerRadius turns Pie -> donut
+
+var label = d3.arc()
+    .outerRadius(radius - 160)
+    .innerRadius(radius);
+
+var squareSize = 30;  //size of square
+var legendSpacing = 8;    //space between square and value
+
+d3.csv("data/asics.csv", function(d) {
+  d.percentage = +d.percentage;
+  d.recovery = +d.recovery;
+  return d;
+ },function(error, data) {
+  if (error) throw error;
+
+  //correctly sorts data based on recovery time
+  var data = data.sort(function(a,b) {return d3.descending(a.recovery, b.recovery);});
+  
+  //Color function help from: http://bl.ocks.org/jfreyre/b1882159636cc9e1283a
+  var color = d3.scaleLinear()
+            .domain([d3.min(data, function(d) { return d.recovery; }), d3.max(data, function(d) { return d.recovery; })])
+            .interpolate(d3.interpolateHcl) //could be d3.inerprolateRgb
+            .range(["white", "blue"]);
+
+  var arc = g.selectAll(".arc")
+    .data(pie(data))
+    .enter().append("g")
+      .attr("class", "arc");
+
+  arc.append("path")
+      .attr("d", path)
+      .attr("fill", function(d) { return color(d.data.recovery); });
+
+  arc.append("text")
+    .attr("transform", function(d) { //Rotated text help from: http://bl.ocks.org/vigorousnorth/7331bb51d4f0c2ae0314
+	  	var midAngle = d.endAngle < Math.PI + 1 ?  //+1 corrects shoulder
+                      d.startAngle/2 + d.endAngle/2 :
+                      d.startAngle/2  + d.endAngle/2 + Math.PI ;
+	  	return "translate(" + label.centroid(d)[0] + "," + label.centroid(d)[1] + ") rotate(-90) rotate(" + (midAngle * 180/Math.PI) + ")"; })
+	  .attr("dy", ".35em")
+	  .attr('text-anchor','middle')
+    .text(function(d) { return d.data.part + " ("+ d.data.percentage + "%)"; })
+      .style("font-weight", 700);
+
+  //legend help from: http://zeroviscosity.com/d3-js-step-by-step/step-3-adding-a-legend
+  var legend = svg.selectAll('.legend')
+      .data(color.domain())
+      .enter().append('g')
+      .attr('class', 'legend')
+      .attr('transform', function(d, i) {
+        var height = squareSize + 5;
+        var vert = (-i * height) + 450; //-i for orientation, height for spacing, 400 for position
+        return 'translate(' + 10 + ',' + vert + ')';
+  });
+
+  //rectangle part of legend
+  legend.append('rect')
+    .attr('width', squareSize)
+    .attr('height', squareSize)
+      .style('fill', color)
+      .style('stroke', "black"); //stroke = border
+
+  //text part of legend
+  legend.append('text')
+    .attr('x', squareSize + legendSpacing) //for position relative to square
+    .attr('y', squareSize - legendSpacing)
+      .text(function(d) { return d + " hour recovery time"; });
+
+});
+/* Answer assignment questions here:
+1)
+a) part: For the part of the body, I just dispayed the text and rotated it based
+  on where it's position was on the circle.
+b) percentage: The percentages are represented by the size of the slice of the
+  pie as well as textually.
+c) recovery: Recovery time is represented by the intensity of blue the slice is,
+  the darker the blue, the longer the recovery time.
+
+2) My visualization is good because it clearly represents all of the data. I
+chose a pie chart specifically because this dataset was dealing with percentages
+ and pie charts enable this to be clearly seen. My visualization allows one to
+ estimate & compare both percentages and recovery time for any parts. Also,
+ obtain a rough distribution of the data (including extremes).
+*/
+</script>

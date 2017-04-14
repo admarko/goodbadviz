@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<style>
+#thevis {
+ outline: black solid 2px;
+ background-color: #B4688D;
+}
+</style>
+
+<svg id="thevis" width="800" height="500"></svg>
+<script src="lib/d3.v4.js"></script>
+<script src="student.js"></script>
+
+<script>
+//Stacked bar chart based off of: https://bl.ocks.org/mbostock/3886208
+//Also consulted: https://dev.socrata.com/blog/2013/08/13/simple-chart-with-d3.html
+var svg = d3.select("svg");
+var margin = {top: 20, right: 30, bottom: 40, left: 40};
+var width = +svg.attr("width") - margin.left - margin.right;
+var height = +svg.attr("height") - margin.top - margin.bottom;
+var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var x = d3.scaleBand()      //for ordinal range
+    .rangeRound([0, width]) //x ranges from 0 to width of svg
+    .paddingInner(0.2);     //space between bars
+
+var y = d3.scaleLinear()
+    .rangeRound([height, 0]); //y ranges from 0 (top of svg) to bottom (height)
+
+var colors = d3.scaleOrdinal().range(["#FD6A17", "#6C5142"]);
+
+d3.csv("data/asics.csv", function(d, i, columns) {
+  for (i = 1, t = 0; i < columns.length; ++i){  //scroll through data
+    d[columns[i]] = +d[columns[i]];             //convert string data to numbers
+    t += d[columns[i]];                         //sum columns
+    d.total = t;                                //assign sum into new total column
+  }
+  return d;
+}, function(error, data) {
+  if (error) throw error;
+
+  var keys = data.columns.slice(1); //store column headers in keys, same as ["percentage", "recovery"]
+
+  //Taking out sort function makes uglier
+  //data.sort(function(a, b) { return b.total - a.total; });
+  x.domain(data.map(function(d) { return d.part; }));           //x domain is parts column
+  y.domain([0, d3.max(data, function(d) { return d.total; })]); //y domain is from 0 to max total
+  colors.domain(keys); //assign color to each column
+
+  g.append("g").selectAll("g")        //create rectangles for all data
+    .data(d3.stack().keys(keys)(data))
+    .enter().append("g")
+      .attr("fill", function(d) { return colors(d.key); }) //color bar based on column
+    .selectAll("rect")
+      .data(function(d) { return d; })                    //use row data for rectangle
+    .enter().append("rect")
+      .attr("x", function(d) { return x(d.data.part); })  //assign x attibute to part of body
+      .attr("y", function(d) { return y(d[1]); })         //assign y attribute to values
+      .attr("height", function(d) { return y(d[0]) - y(d[1]); }) //format bars to align at bottom
+      .attr("width", 50);                                 //width of bar
+
+  g.append("g") //x-axis
+      .attr("class", "axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  g.append("g") //y-axis
+      .attr("class", "axis")
+      .call(d3.axisLeft(y).ticks(null))
+    .append("text")
+      .attr("y", y(y.ticks().pop()))
+      .attr("dx", "-2em")
+      .attr("dy", "-1.3em")
+      .attr("fill", "black")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "start")
+      .text("Total");     //Because of the bad viz 'Total' is best name
+
+  var legend = g.append("g")  //create legend
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 12)
+      .attr("text-anchor", "end")
+    .selectAll("g")
+    .data(keys.slice())
+    .enter().append("g")
+      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  legend.append("rect")     //legend squares
+      .attr("x", width - 1) //x-coordinate positioning
+      .attr("width", 15)
+      .attr("height", 16)
+      .attr("fill", colors)
+      .attr("stroke", "black"); //border
+
+  legend.append("text")     //legend text
+      .attr("x", width - 5)
+      .attr("y", 9.5)
+      .attr("dy", ".22em")
+      .text(function(d) {
+        if(d == "recovery"){
+          return "recovery time (hours)"
+        }else{
+          return "percentage of injury (%)"
+        }
+    });
+});
+/* Answer assignment questions here:
+
+1)
+a) part: Each part of the body is represented textually on the x-axis and with a
+  bar extending upwards from it.
+b) percentage: Percentage is represented by height of the orange part of the
+  bar.
+c) recovery: Recovery is represented by the height of the brown part of the bar.
+
+2)While this visualization allows you to estimate/compare both the
+  percentage/recovery values, you can only do so through great effort. It's a
+  bad visualization because to understand the recovery values, one must subtract
+   the starting height of the brown part of the bar from the total height.
+*/
+</script>
