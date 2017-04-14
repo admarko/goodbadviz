@@ -54,7 +54,7 @@ var label = d3.arc()
 var squareSize = 30;  //size of square
 var legendSpacing = 8;    //space between square and value
 
-d3.csv("data/asics.csv", function(d) {
+d3.csv("asics.csv", function(d) {
   d.percentage = +d.percentage;
   d.recovery = +d.recovery;
   return d;
@@ -115,19 +115,4 @@ d3.csv("data/asics.csv", function(d) {
       .text(function(d) { return d + " hour recovery time"; });
 
 });
-/* Answer assignment questions here:
-1)
-a) part: For the part of the body, I just dispayed the text and rotated it based
-  on where it's position was on the circle.
-b) percentage: The percentages are represented by the size of the slice of the
-  pie as well as textually.
-c) recovery: Recovery time is represented by the intensity of blue the slice is,
-  the darker the blue, the longer the recovery time.
-
-2) My visualization is good because it clearly represents all of the data. I
-chose a pie chart specifically because this dataset was dealing with percentages
- and pie charts enable this to be clearly seen. My visualization allows one to
- estimate & compare both percentages and recovery time for any parts. Also,
- obtain a rough distribution of the data (including extremes).
-*/
 </script>
